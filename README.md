@@ -51,34 +51,32 @@ A Magic Mirror module that provides personalized compliments for multiple recogn
    }
    ```
 3. Modify MMM-Face-Reco-DNN
-   
    ```js
-   {
-   /* Magic Mirror
- * Module: MMM-Face-Reco-DNN
- *
- * By Thierry Nischelwitzer http://nischi.ch
- * MIT Licensed.
- */
+   * Magic Mirror
+    * Module: MMM-Face-Reco-DNN
+    *
+    * By Thierry Nischelwitzer http://nischi.ch
+    * MIT Licensed.
+    */
 
-/*global log*/
+   /*global log*/
 
-'use strict';
+   'use strict';
 
-// eslint-disable-next-line no-undef
-Module.register('MMM-Face-Reco-DNN', {
-  defaults: {
+   // eslint-disable-next-line no-undef
+   Module.register('MMM-Face-Reco-DNN', {
+     defaults: {
     // Configuration options
     // ...
-  },
+     },
 
-  timouts: {},
-  users: [],
-  userClasses: [],
-  image: '',
+     timouts: {},
+     users: [],
+     userClasses: [],
+     image: '',
 
-  // ----------------------------------------------------------------------------------------------------
-  start: function () {
+     // ----------------------------------------------------------------------------------------------------
+     start: function () {
     // Initialize the module
     this.sendSocketNotification('CONFIG', this.config);
     Log.log('Starting module: ' + this.name);
@@ -88,10 +86,10 @@ Module.register('MMM-Face-Reco-DNN', {
     this.config.classes_noface = [this.config.noFaceClass, this.config.defaultClass, this.config.alwaysClass];
     this.config.classes_unknown = [this.config.unknownClass, this.config.defaultClass, this.config.everyoneClass, this.config.alwaysClass];
     this.config.classes_known = [this.config.knownClass, this.config.everyoneClass, this.config.alwaysClass];
-  },
+     },
 
-  // ----------------------------------------------------------------------------------------------------
-  socketNotificationReceived: function (notification, payload) {
+     // ----------------------------------------------------------------------------------------------------
+     socketNotificationReceived: function (notification, payload) {
     var self = this;
     var user;
 
@@ -160,10 +158,10 @@ Module.register('MMM-Face-Reco-DNN', {
         this.sendNotification('USERS_LOGOUT', payload.users);
       }
     }
-  },
+     },
 
-  // ----------------------------------------------------------------------------------------------------
-  notificationReceived: function (notification, payload, _sender) {
+     // ----------------------------------------------------------------------------------------------------
+     notificationReceived: function (notification, payload, _sender) {
     if (notification === 'DOM_OBJECTS_CREATED') {
       // Hide modules that should not be shown at startup
       this.hide_modules(0, this.config.classes_noface);
@@ -174,10 +172,10 @@ Module.register('MMM-Face-Reco-DNN', {
       Log.log(this.name + ' get logged in users ' + this.users);
       this.sendNotification('LOGGED_IN_USERS', this.users); // Send the current user list
     }
-  },
+     },
 
-  // ----------------------------------------------------------------------------------------------------
-  getDom: function () {
+     // ----------------------------------------------------------------------------------------------------
+     getDom: function () {
     // Create and return the DOM for this module
     const wrapperEl = document.createElement('div');
     wrapperEl.classList.add('face-recognition');
@@ -188,11 +186,49 @@ Module.register('MMM-Face-Reco-DNN', {
     wrapperEl.appendChild(imageEl);
 
     return wrapperEl;
-  },
-});
+     },
+   });
+
+   ```
+   or
+   Modify the code inside the socketNotificationReceived function as follows:
+
+   * Send the recognized users array to the compliments module.
+   * Ensure that the new compliments module can handle this notification.
+```js
+   // Inside the socketNotificationReceived function
+if (notification === 'camera_image') {
+    // existing code
+} else if (payload.action === 'login') {
+    var loginCount = 0;
+    for (user of payload.users) {
+        if (user != null) {
+            // existing login logic
+            if (!this.users.includes(user)) {
+                this.login_user(user);
+                loginCount++;
+            }
+        }
+    }
+
+    if (loginCount > 0) {
+        // Send the full array of logged in users to the compliments module
+        this.sendNotification('USERS_LOGIN', this.users); // Send the updated users array
+    }
+} else if (payload.action === 'logout') {
+    // existing logout logic
+}
+```
+In your MMM-MultiUserCompliments module, make sure to handle the USERS_LOGIN notification to display compliments for all recognized users. You might do something like this
+```js
+notificationReceived: function (notification, payload) {
+    if (notification === 'USERS_LOGIN') {
+        // payload is the array of recognized users
+        this.updateCompliments(payload); // Update compliments based on logged-in users
+    }
 }
 ```
 
-4. Restart MagicMirror
+5. Restart MagicMirror
 
 
