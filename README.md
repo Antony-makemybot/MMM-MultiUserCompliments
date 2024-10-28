@@ -52,7 +52,8 @@ A Magic Mirror module that provides personalized compliments for multiple recogn
    ```
 3. Modify MMM-Face-Reco-DNN
    
-   ```bash
+   ```js
+   {
    /* Magic Mirror
  * Module: MMM-Face-Reco-DNN
  *
@@ -189,6 +190,8 @@ Module.register('MMM-Face-Reco-DNN', {
     return wrapperEl;
   },
 });
+}
+```
 
 4. Restart MagicMirror
 
